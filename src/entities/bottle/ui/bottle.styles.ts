@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { LIQUID_HEIGHT } from '../lib/constants';
 
 export const bottleStyles = StyleSheet.create({
     bottle: {
@@ -7,10 +8,12 @@ export const bottleStyles = StyleSheet.create({
         borderColor: '#333',
         borderRadius: 10,
         overflow: 'hidden',
+        width: 40,
+
     },
     liquid: {
-        width: 40,
-        height: 40,
+        width: '100%',
+        height: LIQUID_HEIGHT,
     },
     selected: {
         borderColor: '#ff00ff',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
   SafeAreaView,
@@ -12,7 +12,8 @@ import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
 
-import { Bottle } from 'src/entities/bottle';
+
+import { Board } from 'src/pages/game-board';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -31,6 +32,12 @@ function App(): React.JSX.Element {
    * https://github.com/react-native-community/discussions-and-proposals/discussions/827
    */
 
+  console.log("DEV 모드", __DEV__);
+  console.log("환경:", process.env.NODE_ENV);
+  useEffect(() => {
+    console.log("test")
+  }, [])
+
   return (
     <View style={backgroundStyle}>
       <StatusBar
@@ -38,9 +45,8 @@ function App(): React.JSX.Element {
         backgroundColor={backgroundStyle.backgroundColor}
       />
 
-      <SafeAreaView style={{ backgroundColor: 'black', width: '100%', height: '100%', padding: 100 }}>
-        <Bottle isSelected={true} colors={['red', 'blue', 'green', 'yellow']} />
-        <Bottle colors={['red', 'blue', 'green', 'yellow']} />
+      <SafeAreaView style={{ backgroundColor: 'black', width: '100%', height: '100%' }}>
+        <Board />
       </SafeAreaView>
 
     </View >

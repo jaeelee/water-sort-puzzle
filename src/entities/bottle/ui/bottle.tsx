@@ -1,16 +1,27 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { bottleStyles } from './bottle.styles'
+import { LIQUID_HEIGHT } from '../lib/constants'
 
 interface Props {
+    onClick: () => void,
     colors: Array<string>,
     isSelected?: boolean,
+    maxLiquidCount: number,
+
 }
 
-export const Bottle = ({ colors, isSelected }: Props) => {
+export const Bottle = ({ onClick, maxLiquidCount, colors, isSelected }: Props) => {
 
     return (
-        <View style={[bottleStyles.bottle, isSelected && bottleStyles.selected]}>
+        <Pressable 
+            style={[
+                bottleStyles.bottle,
+                isSelected && bottleStyles.selected,
+                { height: maxLiquidCount * LIQUID_HEIGHT }
+            ]} 
+            onPress={onClick}
+        >
             {
                 colors.map((color, index) =>
                     <View
@@ -19,6 +30,6 @@ export const Bottle = ({ colors, isSelected }: Props) => {
                     />
                 )
             }
-        </View >
+        </Pressable >
     )
 }
