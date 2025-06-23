@@ -1,1 +1,1 @@
-export { Bottle } from './ui/bottle';
+export { Bottle } from '../../pages/game-board/ui/bottle';

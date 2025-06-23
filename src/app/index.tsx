@@ -1,13 +1,9 @@
-import React, { useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
+import React from 'react';
 import {
-  SafeAreaView,
   StatusBar,
-  StyleSheet,
   useColorScheme,
-  View,
 } from 'react-native';
-
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
@@ -34,42 +30,19 @@ function App(): React.JSX.Element {
 
   console.log("DEV 모드", __DEV__);
   console.log("환경:", process.env.NODE_ENV);
-  useEffect(() => {
-    console.log("test")
-  }, [])
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-
-      <SafeAreaView style={{ backgroundColor: 'black', width: '100%', height: '100%' }}>
+    <SafeAreaProvider>
+      <SafeAreaView style={backgroundStyle}>
+        {/* <StatusBar
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={backgroundStyle.backgroundColor}
+        /> */}
         <Board />
-      </SafeAreaView>
+      </SafeAreaView >
+    </SafeAreaProvider>
 
-    </View >
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;

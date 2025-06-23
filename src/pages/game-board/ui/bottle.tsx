@@ -14,12 +14,12 @@ interface Props {
 export const Bottle = ({ onClick, maxLiquidCount, colors, isSelected }: Props) => {
 
     return (
-        <Pressable 
+        <Pressable
             style={[
                 bottleStyles.bottle,
                 isSelected && bottleStyles.selected,
                 { height: maxLiquidCount * LIQUID_HEIGHT }
-            ]} 
+            ]}
             onPress={onClick}
         >
             {

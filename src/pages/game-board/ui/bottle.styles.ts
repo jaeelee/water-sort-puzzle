@@ -4,12 +4,17 @@ import { LIQUID_HEIGHT } from '../lib/constants';
 export const bottleStyles = StyleSheet.create({
     bottle: {
         alignSelf: 'flex-start',  // 자식 크기에 맞춤
-        borderWidth: 2,
+        borderWidth: 1,
+        padding: 1,
         borderColor: '#333',
-        borderRadius: 10,
+        // borderBottomLeftRadius: 100,
+        // borderBottomRightRadius: 100,
+        borderBottomEndRadius: 100,
+        borderBottomStartRadius: 100,
         overflow: 'hidden',
-        width: 40,
-
+        width: '10%',
+        minWidth: 40,
+        margin: 10,
     },
     liquid: {
         width: '100%',
