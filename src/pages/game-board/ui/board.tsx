@@ -12,7 +12,7 @@ const dump: { [key: string]: string[]; } = {
     bottle_4: [],
     bottle_5: []
 }
-const COLOR = ['red', 'blue', 'green', 'yellow', 'orange']
+const COLOR = ['red', 'blue', 'green', 'yellow', 'orange',]
 
 export const Board = () => {
     const [selectedIndex, setSelectedIndex] = useState(-1);
