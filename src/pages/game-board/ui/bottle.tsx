@@ -18,18 +18,23 @@ export const Bottle = ({ onClick, maxLiquidCount, colors, isSelected }: Props) =
             style={[
                 bottleStyles.bottle,
                 isSelected && bottleStyles.selected,
-                { height: maxLiquidCount * LIQUID_HEIGHT }
+                { height: maxLiquidCount * LIQUID_HEIGHT + 25 }
             ]}
             onPress={onClick}
         >
+
             {
-                colors.map((color, index) =>
-                    <View
+                colors.map((color, index) => {
+                    const isLast = index === colors.length - 1;
+                    return <View
                         key={index}
-                        style={[bottleStyles.liquid, { backgroundColor: color }]}
+                        style={[bottleStyles.liquid, { backgroundColor: color, },
+                        isLast && bottleStyles.lastLiquid]}
                     />
+                }
                 )
             }
+
         </Pressable >
     )
 }
