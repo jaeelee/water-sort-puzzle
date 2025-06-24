@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { View } from "react-native"
-import { Bottle } from "src/entities/bottle"
 import { generatePuzzle, isSolved } from "../lib/game-generator";
 import { boardStyles } from "./board.styles";
+import { Bottle } from "./bottle";
 
 
 const dump: { [key: string]: string[]; } = {

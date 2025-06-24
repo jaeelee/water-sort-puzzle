@@ -1,1 +1,0 @@
-export { Bottle } from '../../pages/game-board/ui/bottle';
