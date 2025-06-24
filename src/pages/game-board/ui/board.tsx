@@ -1,25 +1,35 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native"
-import { generatePuzzle, isSolved } from "../lib/game-generator";
-import { boardStyles } from "./board.styles";
-import { Bottle } from "./bottle";
+import { PuzzleGeneratorAPI } from "src/pages/game-board/lib/game-generator";
+import { isSolved, printSolution, solvePuzzle } from "src/pages/game-board/lib/game-solver";
+import { boardStyles } from "src/pages/game-board/ui/board.styles";
+import { Bottle } from "src/pages/game-board/ui/bottle";
 
-
-const dump: { [key: string]: string[]; } = {
-    bottle_1: ['red', 'blue', 'green', 'yellow',],
-    bottle_2: ['red', 'blue', 'green', 'yellow',],
-    bottle_3: ['red', 'blue', 'green', 'yellow',],
-    bottle_4: [],
-    bottle_5: []
-}
-const COLOR = ['red', 'red', 'green', 'yellow', 'blue',]
+const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331']
 
 export const Board = () => {
+    const puzzle = useMemo(() => PuzzleGeneratorAPI.generateCustomPuzzle({
+        numColors: 10,
+        bottleHeight: 4,
+        numBottles: 12
+    }), []);
     const [selectedIndex, setSelectedIndex] = useState(-1);
 
-    const puzzle = generatePuzzle(7);
-    console.log(puzzle)
-    console.log(isSolved(puzzle))
+    useEffect(() => {
+        const solution = solvePuzzle(puzzle);
+        console.log('Solution:', solution);
+        printSolution(solution);
+
+        console.log(puzzle)
+        console.log(isSolved(puzzle))
+
+    }, [])
+
+    const handleBottleClick = useCallback((index: number) => {
+        setSelectedIndex(prev => prev === index ? -1 : index);
+    }, []);
+
+
     return (
         <View style={boardStyles.board}>
             {
@@ -27,9 +37,7 @@ export const Board = () => {
                     return <Bottle
                         key={index}
                         maxLiquidCount={4}
-                        onClick={() => selectedIndex === index ?
-                            setSelectedIndex(-1) :
-                            setSelectedIndex(index)}
+                        onClick={() => handleBottleClick(index)}
                         isSelected={selectedIndex === index}
                         colors={colors.map(e => COLOR[e])} />
                 })}

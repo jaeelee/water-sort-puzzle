@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
-import { bottleStyles } from './bottle.styles'
-import { LIQUID_HEIGHT } from '../lib/constants'
+import { LIQUID_HEIGHT } from 'src/pages/game-board/lib/constants';
+import { bottleStyles } from 'src/pages/game-board/ui/bottle.styles';
 
 interface Props {
     onClick: () => void,
@@ -11,7 +11,7 @@ interface Props {
 
 }
 
-export const Bottle = ({ onClick, maxLiquidCount, colors, isSelected }: Props) => {
+export const Bottle = React.memo(({ onClick, maxLiquidCount, colors, isSelected }: Props) => {
 
     return (
         <Pressable
@@ -37,4 +37,4 @@ export const Bottle = ({ onClick, maxLiquidCount, colors, isSelected }: Props) =
 
         </Pressable >
     )
-}
+})

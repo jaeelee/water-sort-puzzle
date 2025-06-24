@@ -1,190 +1,269 @@
-type Color = number; // 0: empty, 1~n: colors
-type Bottle = Color[];
-type GameState = Bottle[];
+import { Bottle, Color, GameState, Move } from "src/pages/game-board/model/types";
 
-interface Move {
-    from: number;
-    to: number;
-    amount: number;
+export interface GeneratorConfig {
+    numColors: number;
+    bottleHeight: number;
+    numBottles?: number;
+    mixingSteps?: number;
 }
 
-const BOTTLE_HEIGHT = 4;
-const EMPTY_BOTTLES = 2;
+// shared/lib/constants.ts (동일)
+export const GAME_CONFIG = {
+    MIN_COLORS: 2,
+    MIN_BOTTLE_HEIGHT: 4,
+    DEFAULT_MIXING_STEPS: 200,
+    MAX_GENERATION_ATTEMPTS: 10,
+    MIN_EMPTY_BOTTLES: 2,
+} as const;
 
-/**
- * 새로운 Water Sort 퍼즐을 생성합니다
- * @param colorCount 색상의 개수
- * @param emptyBottles 빈 병의 개수 (기본값: 2)
- * @param shuffleMoves 섞기 이동 횟수 (기본값: 50)
- */
-function generatePuzzle(colorCount: number, emptyBottles: number = 2, shuffleMoves: number = 50): GameState {
-    // 1. 완성된 상태로 시작
-    const gameState = createSolvedState(colorCount, emptyBottles);
+// features/puzzle-generator/model/generator.ts
+class WaterSortPuzzleGenerator {
+    private config: Required<GeneratorConfig>;
 
-    // 2. 유효한 역방향 이동으로 섞기
-    shuffleGame(gameState, shuffleMoves);
-
-    return gameState;
-}
-
-/**
- * 완성된 상태(각 병이 단색으로 가득참)를 생성
- */
-function createSolvedState(colorCount: number, emptyBottles: number): GameState {
-    const bottles: GameState = [];
-
-    // 각 색상별로 하나의 병을 만들어 가득 채움
-    for (let color = 1; color <= colorCount; color++) {
-        const bottle: Bottle = new Array(BOTTLE_HEIGHT).fill(color);
-        bottles.push(bottle);
+    constructor(config: GeneratorConfig) {
+        this.validateConfig(config);
+        this.config = {
+            numColors: config.numColors,
+            bottleHeight: config.bottleHeight,
+            numBottles: config.numBottles || config.numColors + 2,
+            mixingSteps: config.mixingSteps || GAME_CONFIG.DEFAULT_MIXING_STEPS
+        };
     }
 
-    // 빈 병들 추가
-    for (let i = 0; i < emptyBottles; i++) {
-        bottles.push([]);
-    }
-
-    return bottles;
-}
-
-/**
- * 게임 상태를 섞습니다 (역방향 이동 적용)
- */
-function shuffleGame(gameState: GameState, moves: number): void {
-    for (let i = 0; i < moves; i++) {
-        const possibleMoves = getAllValidMoves(gameState);
-
-        if (possibleMoves.length === 0) {
-            break; // 더 이상 유효한 이동이 없으면 중단
+    private validateConfig(config: GeneratorConfig): void {
+        if (config.numColors < GAME_CONFIG.MIN_COLORS) {
+            throw new Error(`색상 개수는 최소 ${GAME_CONFIG.MIN_COLORS}개 이상이어야 합니다.`);
         }
-
-        // 랜덤하게 하나의 이동 선택
-        const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        executeMove(gameState, randomMove);
+        if (config.bottleHeight < GAME_CONFIG.MIN_BOTTLE_HEIGHT) {
+            throw new Error(`병의 높이는 최소 ${GAME_CONFIG.MIN_BOTTLE_HEIGHT} 이상이어야 합니다.`);
+        }
     }
-}
 
-/**
- * 현재 상태에서 가능한 모든 유효한 이동을 찾습니다
- */
-function getAllValidMoves(gameState: GameState): Move[] {
-    const moves: Move[] = [];
+    generate(): GameState {
+        // 역방향 생성 대신 직접 섞인 상태 생성 + 검증
+        let attempts = 0;
+        while (true) {
+            // while (attempts < GAME_CONFIG.MAX_GENERATION_ATTEMPTS) {
+            const mixedState = this.createDirectlyMixedState();
 
-    for (let from = 0; from < gameState.length; from++) {
-        for (let to = 0; to < gameState.length; to++) {
-            if (from === to) continue;
-
-            const move = getValidMove(gameState, from, to);
-            if (move) {
-                moves.push(move);
+            if (this.isCompletelyMixed(mixedState) && this.hasValidStructure(mixedState)) {
+                console.log(`${attempts + 1}번째 시도에서 성공적으로 생성됨`);
+                return mixedState;
             }
         }
+
+        throw new Error(`${GAME_CONFIG.MAX_GENERATION_ATTEMPTS}번 시도 후에도 유효한 퍼즐을 생성할 수 없습니다.`);
     }
 
-    return moves;
-}
+    private createDirectlyMixedState(): GameState {
+        // 1. 모든 색상을 배열로 생성
+        const allColors: Color[] = [];
+        for (let colorId = 1; colorId <= this.config.numColors; colorId++) {
+            for (let i = 0; i < this.config.bottleHeight; i++) {
+                allColors.push(colorId);
+            }
+        }
 
-/**
- * 두 병 사이의 유효한 이동을 확인하고 반환합니다
- */
-function getValidMove(gameState: GameState, from: number, to: number): Move | null {
-    const fromBottle = gameState[from];
-    const toBottle = gameState[to];
+        // 2. 색상 배열을 완전히 섞기
+        this.shuffleArray(allColors);
 
-    // 출발 병이 비어있으면 이동 불가
-    if (fromBottle.length === 0) return null;
+        // 3. 섞인 색상을 병에 분배 (전략적으로)
+        const state: GameState = [];
+        let colorIndex = 0;
 
-    // 목적지 병이 가득 차있으면 이동 불가
-    if (toBottle.length >= BOTTLE_HEIGHT) return null;
+        // 대부분의 병을 가득 채우되, 마지막 몇 개는 빈 상태로 남김
+        const filledBottles = this.config.numBottles - GAME_CONFIG.MIN_EMPTY_BOTTLES;
 
-    const topColorFrom = fromBottle[fromBottle.length - 1];
+        for (let bottleIdx = 0; bottleIdx < filledBottles; bottleIdx++) {
+            const bottle: Bottle = [];
 
-    // 목적지 병이 비어있거나, 같은 색상이면 이동 가능
-    if (toBottle.length === 0 || toBottle[toBottle.length - 1] === topColorFrom) {
-        // 연속된 같은 색상의 개수 계산
-        const amount = getConsecutiveCount(fromBottle, topColorFrom);
+            // 각 병을 가득 채우기 (4개)
+            for (let i = 0; i < this.config.bottleHeight && colorIndex < allColors.length; i++) {
+                bottle.push(allColors[colorIndex++]);
+            }
 
-        // 목적지 병의 남은 공간 계산
-        const availableSpace = BOTTLE_HEIGHT - toBottle.length;
+            state.push(bottle);
+        }
 
-        // 실제 이동할 수 있는 양
-        const moveAmount = Math.min(amount, availableSpace);
+        // 빈 병들 추가
+        for (let i = 0; i < GAME_CONFIG.MIN_EMPTY_BOTTLES; i++) {
+            state.push([]);
+        }
 
-        if (moveAmount > 0) {
-            return { from, to, amount: moveAmount };
+        return state;
+    }
+
+    // Fisher-Yates 셔플 알고리즘
+    private shuffleArray<T>(array: T[]): void {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
         }
     }
 
-    return null;
-}
-
-/**
- * 병의 맨 위에서부터 연속된 같은 색상의 개수를 계산
- */
-function getConsecutiveCount(bottle: Bottle, color: Color): number {
-    let count = 0;
-    for (let i = bottle.length - 1; i >= 0; i--) {
-        if (bottle[i] === color) {
-            count++;
-        } else {
-            break;
-        }
+    private countEmptyBottles(state: GameState): number {
+        return state.filter(bottle => bottle.length === 0).length;
     }
-    return count;
-}
 
-/**
- * 이동을 실행합니다
- */
-function executeMove(gameState: GameState, move: Move): void {
-    const { from, to, amount } = move;
-    const fromBottle = gameState[from];
-    const toBottle = gameState[to];
+    // 완전 섞임 검증: 1. 색이 겹치지 않았는가 (각 병에 다양한 색상이 있는가)
+    private isCompletelyMixed(state: GameState): boolean {
+        for (const bottle of state) {
+            if (bottle.length === 0) continue;
+            let prevColor = 0;
+            for (const color of bottle) {
+                if (prevColor === color) return false;
+                prevColor = color;
+            }
+        }
+        return true;
+    }
 
-    // from 병에서 액체 제거
-    const movedLiquid = fromBottle.splice(-amount, amount);
-
-    // to 병에 액체 추가
-    toBottle.push(...movedLiquid);
-}
-
-/**
- * 게임 상태를 콘솔에 출력 (디버깅용)
- */
-function printGameState(gameState: GameState): void {
-    console.log("=== Game State ===");
-    gameState.forEach((bottle, index) => {
-        const display = bottle.length === 0 ? "[]" : `[${bottle.join(",")}]`;
-        console.log(`Bottle ${index}: ${display}`);
-    });
-    console.log("==================");
-}
-
-/**
- * 퍼즐이 해결되었는지 확인
- */
-function isSolved(gameState: GameState): boolean {
-    return gameState.every(bottle => {
-        // 빈 병이거나
-        if (bottle.length === 0) return true;
-
-        // 가득 차있고 모든 색상이 같은 경우
-        if (bottle.length === BOTTLE_HEIGHT) {
-            const firstColor = bottle[0];
-            return bottle.every(color => color === firstColor);
+    // 완전 섞임 검증: 2. 빈병이 아닌 곳은 모두 적절히 구성되어 있는가
+    private hasValidStructure(state: GameState): boolean {
+        // 색상 개수 검증
+        const colorCounts = new Map<Color, number>();
+        for (const bottle of state) {
+            for (const color of bottle) {
+                colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+            }
         }
 
-        return false;
-    });
+        // 모든 색상이 정확히 bottleHeight개씩 있어야 함
+        if (colorCounts.size !== this.config.numColors) {
+            console.log(`색상 개수 불일치: 기대 ${this.config.numColors}, 실제 ${colorCounts.size}`);
+            return false;
+        }
+
+        for (const [color, count] of colorCounts.entries()) {
+            if (count !== this.config.bottleHeight) {
+                console.log(`색상 ${color}의 개수 불일치: 기대 ${this.config.bottleHeight}, 실제 ${count}`);
+                return false;
+            }
+        }
+
+        // 빈 병 개수 확인
+        const emptyBottles = this.countEmptyBottles(state);
+        if (emptyBottles < GAME_CONFIG.MIN_EMPTY_BOTTLES) {
+            console.log(`빈 병 부족: 최소 ${GAME_CONFIG.MIN_EMPTY_BOTTLES}개 필요, 실제 ${emptyBottles}개`);
+            return false;
+        }
+
+        return true;
+    }
 }
 
+// features/puzzle-generator/api/generator-api.ts
+export class PuzzleGeneratorAPI {
+    static generateEasyPuzzle(): GameState {
+        const generator = new WaterSortPuzzleGenerator({
+            numColors: 3,
+            bottleHeight: 4,
+            numBottles: 5
+        });
+        return generator.generate();
+    }
 
-export {
-    generatePuzzle,
-    printGameState,
-    isSolved,
-    executeMove,
-    getAllValidMoves,
-    type GameState,
-    type Move
-};
+    static generateMediumPuzzle(): GameState {
+        const generator = new WaterSortPuzzleGenerator({
+            numColors: 5,
+            bottleHeight: 4,
+            numBottles: 7
+        });
+        return generator.generate();
+    }
+
+    static generateHardPuzzle(): GameState {
+        const generator = new WaterSortPuzzleGenerator({
+            numColors: 8,
+            bottleHeight: 4,
+            numBottles: 10
+        });
+        return generator.generate();
+    }
+
+    static generateCustomPuzzle(config: GeneratorConfig): GameState {
+        const generator = new WaterSortPuzzleGenerator(config);
+        return generator.generate();
+    }
+}
+
+// features/puzzle-generator/lib/utils.ts
+export class PuzzleUtils {
+    static printPuzzle(state: GameState): void {
+        console.log('\n=== Water Sort Puzzle ===');
+        const maxHeight = Math.max(...state.map(bottle => bottle.length), 1);
+
+        // 위에서부터 출력
+        for (let level = maxHeight - 1; level >= 0; level--) {
+            let row = '';
+            for (let bottleIndex = 0; bottleIndex < state.length; bottleIndex++) {
+                const bottle = state[bottleIndex];
+                if (level < bottle.length) {
+                    row += `[${bottle[level]}] `;
+                } else {
+                    row += '[ ] ';
+                }
+            }
+            console.log(row);
+        }
+
+        // 병 번호 출력
+        let bottleNumbers = '';
+        for (let i = 0; i < state.length; i++) {
+            bottleNumbers += ` ${i}  `;
+        }
+        console.log(bottleNumbers);
+        console.log('========================\n');
+    }
+
+    static analyzePuzzle(state: GameState): void {
+        console.log('=== 퍼즐 분석 ===');
+
+        let mixedBottles = 0;
+        let completedBottles = 0;
+        let emptyBottles = 0;
+
+        for (let i = 0; i < state.length; i++) {
+            const bottle = state[i];
+            if (bottle.length === 0) {
+                emptyBottles++;
+                console.log(`병 ${i}: 빈 병`);
+            } else {
+                const uniqueColors = new Set(bottle);
+                if (uniqueColors.size === 1) {
+                    completedBottles++;
+                    console.log(`병 ${i}: 완성된 병 (색상 ${bottle[0]})`);
+                } else {
+                    mixedBottles++;
+                    console.log(`병 ${i}: 섞인 병 (색상: ${Array.from(uniqueColors).join(', ')})`);
+                }
+            }
+        }
+
+        console.log(`\n총계: 섞인 병 ${mixedBottles}개, 완성된 병 ${completedBottles}개, 빈 병 ${emptyBottles}개`);
+        console.log('================\n');
+    }
+
+    static validatePuzzleConstraints(state: GameState): boolean {
+        const colorCounts = new Map<Color, number>();
+
+        for (const bottle of state) {
+            for (const color of bottle) {
+                colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+            }
+        }
+
+        // 모든 색상이 같은 개수인지 확인
+        const counts = Array.from(colorCounts.values());
+        if (counts.length === 0) return false;
+
+        const expectedCount = counts[0];
+        const isValid = counts.every(count => count === expectedCount);
+
+        if (!isValid) {
+            console.log('색상 개수 불일치:', Object.fromEntries(colorCounts));
+        }
+
+        return isValid;
+    }
+}
