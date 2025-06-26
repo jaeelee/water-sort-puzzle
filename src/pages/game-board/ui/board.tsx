@@ -1,33 +1,52 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native"
 import { PuzzleGeneratorAPI } from "src/pages/game-board/lib/game-generator";
-import { isSolved, printSolution, solvePuzzle } from "src/pages/game-board/lib/game-solver";
+import { GameAPI } from "src/pages/game-board/lib/game-logic";
 import { boardStyles } from "src/pages/game-board/ui/board.styles";
 import { Bottle } from "src/pages/game-board/ui/bottle";
 
-const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331']
+const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331', "#9977aa", "#ad12ad"]
 
-export const Board = () => {
-    const puzzle = useMemo(() => PuzzleGeneratorAPI.generateCustomPuzzle({
-        numColors: 10,
-        bottleHeight: 4,
-        numBottles: 12
-    }), []);
+export const Board = ({ bottleHeight = 4, numColors = 6 }) => {
+    const [puzzle, setPuzzle] = useState(() => {
+        console.log('퍼즐 생성 중...'); // 한 번만 실행됨을 확인
+        return PuzzleGeneratorAPI.generateCustomPuzzle({
+            numColors,
+            bottleHeight,
+            numBottles: numColors + 2,
+        });
+    });
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const gameAPI = new GameAPI(bottleHeight);
 
-    useEffect(() => {
-        const solution = solvePuzzle(puzzle);
-        console.log('Solution:', solution);
-        printSolution(solution);
+    const handleBottleClick = (index: number) => {
+        if (selectedIndex > -1) {
+            if (selectedIndex === index) {
+                setSelectedIndex(-1);
+                return;
+            }
 
-        console.log(puzzle)
-        console.log(isSolved(puzzle))
+            console.log(`병 ${selectedIndex} → 병 ${index} 이동 시도`);
+            const result = gameAPI.autoMoveLiquid(puzzle, selectedIndex, index);
 
-    }, [])
+            if (result.success && result.newState) {
+                setPuzzle(result.newState);
+                setSelectedIndex(-1);
+                console.log(`이동 성공: ${result.actualAmount}개 이동`);
+            } else {
+                console.log(`이동 실패: ${result.error}`);
+                setSelectedIndex(-1);
+            }
+        } else {
+            if (puzzle[index].length === 0) {
+                console.log('빈 병은 선택할 수 없습니다.');
+                return;
+            }
 
-    const handleBottleClick = useCallback((index: number) => {
-        setSelectedIndex(prev => prev === index ? -1 : index);
-    }, []);
+            setSelectedIndex(index);
+            console.log(`병 ${index} 선택됨`);
+        }
+    };
 
 
     return (

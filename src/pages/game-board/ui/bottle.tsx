@@ -24,15 +24,14 @@ export const Bottle = React.memo(({ onClick, maxLiquidCount, colors, isSelected 
         >
 
             {
-                colors.map((color, index) => {
+                colors.reverse().map((color, index) => {
                     const isLast = index === colors.length - 1;
                     return <View
                         key={index}
                         style={[bottleStyles.liquid, { backgroundColor: color, },
                         isLast && bottleStyles.lastLiquid]}
                     />
-                }
-                )
+                })
             }
 
         </Pressable >
