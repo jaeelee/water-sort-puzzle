@@ -1,8 +1,11 @@
 import { StyleSheet } from "react-native";
 
 export const boardStyles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
     board: {
-        height: '100%',
+        flex: 1,
         flexDirection: 'row',
         flexWrap: 'wrap',        // 줄바꿈 허용
         paddingHorizontal: 30,

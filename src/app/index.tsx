@@ -3,13 +3,14 @@ import {
   StatusBar,
   useColorScheme,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   Colors,
 } from 'react-native/Libraries/NewAppScreen';
-
-
+import { Home } from 'src/pages/home';
 import { Board } from 'src/pages/game-board';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -31,17 +32,36 @@ function App(): React.JSX.Element {
   console.log("DEV 모드", __DEV__);
   console.log("환경:", process.env.NODE_ENV);
 
+  const Stack = createNativeStackNavigator();
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={backgroundStyle}>
-        {/* <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={backgroundStyle.backgroundColor}
-        /> */}
-        <Board />
-      </SafeAreaView >
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: backgroundStyle.backgroundColor,
+            },
+            contentStyle: {
+              backgroundColor: backgroundStyle.backgroundColor,
+            },
+            headerTintColor: isDarkMode ? Colors.lighter : Colors.darker,
+          }}
+        >
+          <Stack.Screen
+            name="Home"
+            component={Home}
+            options={{ title: '난이도 선택' }}
+          />
+          <Stack.Screen
+            name="Game"
+            component={Board}
+            options={{ title: '물 분류 퍼즐' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
     </SafeAreaProvider>
-
   );
 }
 
