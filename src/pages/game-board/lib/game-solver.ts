@@ -4,13 +4,14 @@ import { Color, GameState, Move } from "src/pages/game-board/model/types";
 /**
  * 퍼즐이 해결되었는지 확인
  */
-export const isSolved = (gameState: GameState): boolean => {
+export const isSolved = (gameState: GameState, bottleHeight: number = BOTTLE_HEIGHT): boolean => {
     return gameState.every(bottle => {
         // 빈 병이거나
         if (bottle.length === 0) return true;
 
         // 가득 차있고 모든 색상이 같은 경우
-        if (bottle.length === BOTTLE_HEIGHT) {
+        console.log(bottle.length, bottleHeight);
+        if (bottle.length === bottleHeight) {
             const firstColor = bottle[0];
             return bottle.every(color => color === firstColor);
         }

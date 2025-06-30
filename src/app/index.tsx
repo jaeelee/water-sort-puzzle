@@ -52,12 +52,12 @@ function App(): React.JSX.Element {
           <Stack.Screen
             name="Home"
             component={Home}
-            options={{ title: '난이도 선택' }}
+            options={{ title: 'Home' }}
           />
           <Stack.Screen
             name="Game"
             component={Board}
-            options={{ title: '물 분류 퍼즐' }}
+            options={{ title: '' }}
           />
         </Stack.Navigator>
       </NavigationContainer>
