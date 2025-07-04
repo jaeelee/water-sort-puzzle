@@ -3,36 +3,40 @@ import { View, Text, Button, StyleSheet, ScrollView } from "react-native"
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from "react";
-import { GameState, loadGame } from 'src/entities/game';
-import { GameSettings, Difficulty } from 'src/pages/game-board/model/types';
+import { Difficulty, GameState, loadGame } from 'src/entities/game';
 import { BottomPicker } from 'src/shared';
 
 type RootStackParamList = {
     Home: undefined;
-    Game: { game?: GameState; settings?: GameSettings } | undefined;
+    Game: { game: GameState } | undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export const Home = () => {
     const navigation = useNavigation<NavigationProp>();
-    const [game, setGame] = useState<GameState | undefined>(undefined);
-    const [settings, setSettings] = useState<GameSettings>({
+    const [game, setGame] = useState<GameState>({
         difficulty: 'easy',
-        bottleSize: 4,
-        bottleCount: 3
+        bottleHeight: 4,
+        numColors: 3,
+        puzzle: []
     });
 
     useFocusEffect(
         React.useCallback(() => {
             loadGame().then((savedGame) => {
-                setGame(savedGame || undefined);
+                setGame(savedGame || {
+                    difficulty: 'easy',
+                    bottleHeight: 4,
+                    numColors: 3,
+                    puzzle: []
+                });
             });
         }, [])
     );
 
     const handleStartNewGame = () => {
-        navigation.navigate('Game', { settings });
+        navigation.navigate('Game');
     };
 
     const handleResumeGame = () => {
@@ -45,11 +49,11 @@ export const Home = () => {
             <ScrollView style={styles.container}>
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle} onPress={() => setIsVisible('difficulty')}>난이도</Text>
-                    <Text style={styles.sectionTitle}>{settings.difficulty}</Text>
+                    <Text style={styles.sectionTitle}>{game.difficulty}</Text>
                     <BottomPicker<Difficulty>
                         title='난이도'
-                        selectedValue={settings.difficulty}
-                        onValueChange={(value) => setSettings(prev => ({ ...prev, difficulty: value }))}
+                        selectedValue={game.difficulty}
+                        onValueChange={(value) => setGame(prev => ({ ...prev, difficulty: value }))}
                         values={['easy', 'medium', 'hard']}
                         isVisible={isVisible === 'difficulty'}
                         setIsVisible={(isVisible) => setIsVisible(isVisible ? 'difficulty' : null)}
@@ -59,11 +63,11 @@ export const Home = () => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle} onPress={() => setIsVisible('bottleSize')}>병의 크기</Text>
-                    <Text style={styles.sectionTitle}>{settings.bottleSize}</Text>
+                    <Text style={styles.sectionTitle}>{game.bottleHeight}</Text>
                     <BottomPicker<number>
                         title='병의 크기'
-                        selectedValue={settings.bottleSize}
-                        onValueChange={(value) => setSettings(prev => ({ ...prev, bottleSize: value }))}
+                        selectedValue={game.bottleHeight}
+                        onValueChange={(value) => setGame(prev => ({ ...prev, bottleHeight: value }))}
                         values={[3, 4, 5, 6, 7, 8, 9, 10]}
                         isVisible={isVisible === 'bottleSize'}
                         setIsVisible={(isVisible) => setIsVisible(isVisible ? 'bottleSize' : null)}
@@ -72,12 +76,12 @@ export const Home = () => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle} onPress={() => setIsVisible('bottleCount')}>병의 개수</Text>
-                    <Text style={styles.sectionTitle}>{settings.bottleCount}</Text>
+                    <Text style={styles.sectionTitle}>{game.numColors}</Text>
                     <BottomPicker<number>
                         title='병의 개수'
-                        selectedValue={settings.bottleCount}
-                        onValueChange={(value) => setSettings(prev => ({ ...prev, bottleCount: value }))}
-                        values={[3, 4, 5, 6, 7, 8, 9, 10]}
+                        selectedValue={game.numColors}
+                        onValueChange={(value) => setGame(prev => ({ ...prev, numColors: value }))}
+                        values={[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]}
                         isVisible={isVisible === 'bottleCount'}
                         setIsVisible={(isVisible) => setIsVisible(isVisible ? 'bottleCount' : null)}
                     />

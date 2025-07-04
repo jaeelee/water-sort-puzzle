@@ -9,9 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { isSolved } from 'src/pages/game-board/lib/game-solver';
 import { GameExitModal } from 'src/features/game-exit';
 import { GameCompleteModal } from 'src/features/game-exit/ui/game-complete-modal';
-import { clearGame, loadGame, saveGame } from 'src/entities/game';
-import type { GameState } from 'src/entities/game';
-import type { GameSettings } from 'src/pages/game-board/model/types';
+import { clearGame, GameState, loadGame, saveGame } from 'src/entities/game';
 
 const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331', "#9977aa", "#ad12ad"]
 
@@ -20,15 +18,13 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     const route = useRoute();
     const params = route.params as any;
     const game = params?.game as GameState | undefined;
-    const settings = params?.settings as GameSettings | undefined;
     // 설정이 있으면 설정을 사용, 없으면 기본값 사용
-    const finalBottleHeight = settings?.bottleSize || bottleHeight;
+    const finalBottleHeight = game?.bottleHeight || bottleHeight;
     const gameAPI = new GameAPI(finalBottleHeight);
 
     const [puzzle, setPuzzle] = useState(() => {
         console.log('퍼즐 생성 중...'); // 한 번만 실행됨을 확인
         console.log("받은 game:", game);
-        console.log("받은 settings:", settings);
 
         if (game) {
             console.log("저장된 게임 불러오기:", game.puzzle);
@@ -36,8 +32,8 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
         }
 
         // 설정이 있으면 설정을 사용, 없으면 기본값 사용
-        const finalBottleHeight = settings?.bottleSize || bottleHeight;
-        const finalNumBottles = settings?.bottleCount || (numColors + 2);
+        const finalBottleHeight = game?.bottleHeight || bottleHeight;
+        const finalNumBottles = game?.numColors || (numColors + 2);
         const finalNumColors = Math.min(finalNumBottles - 2, numColors); // 병 개수에 맞게 색상 수 조정
 
         console.log("새 게임 생성", {
@@ -51,9 +47,10 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
             bottleHeight: finalBottleHeight,
             numBottles: finalNumBottles,
         });
-        saveGame({ puzzle, bottleHeight: finalBottleHeight, numColors: finalNumColors });
+        saveGame({ puzzle, bottleHeight: finalBottleHeight, numColors: finalNumColors, difficulty: game?.difficulty || 'easy' });
         return puzzle;
     });
+
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [solved, setIsSolved] = useState(false);
 

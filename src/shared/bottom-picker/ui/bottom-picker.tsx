@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Picker } from '@react-native-picker/picker';
 import { Button, Modal, Text, TouchableWithoutFeedback, View } from 'react-native';
-import { pickerStyles } from 'src/shared/ui/bottom-picker.styles';
+import { pickerStyles } from 'src/shared/bottom-picker/ui/bottom-picker.styles';
 
 interface PickerProps<T extends string | number> {
     title?: string;
