@@ -1,10 +1,12 @@
 // shared/model/types.ts (기존과 동일)
 
-import { Bottle, Color, GameState, Move } from "src/pages/game-board/model/types";
+import { Bottle, Color, Puzzle } from "src/entities/game";
+import { Move } from "src/pages/game-board/model/types";
+
 
 export interface MoveResult {
     success: boolean;
-    newState?: GameState;
+    newState?: Puzzle;
     error?: string;
     actualAmount?: number;
 }
@@ -20,7 +22,7 @@ export class LiquidMover {
     /**
      * 액체를 이동시키는 메인 함수
      */
-    moveLiquid(state: GameState, move: Move): MoveResult {
+    moveLiquid(state: Puzzle, move: Move): MoveResult {
         // 1. 기본 유효성 검사
         const validationResult = this.validateMove(state, move);
         if (!validationResult.success) {
@@ -52,7 +54,7 @@ export class LiquidMover {
     /**
      * 이동 유효성 검사
      */
-    private validateMove(state: GameState, move: Move): MoveResult {
+    private validateMove(state: Puzzle, move: Move): MoveResult {
         const { from, to, amount } = move;
 
         // 병 인덱스 범위 확인
@@ -93,7 +95,7 @@ export class LiquidMover {
     /**
      * 실제 이동 가능한 액체 양 계산
      */
-    private calculateActualMoveAmount(state: GameState, move: Move): number {
+    private calculateActualMoveAmount(state: Puzzle, move: Move): number {
         const { from, to, amount } = move;
         const fromBottle = state[from];
         const toBottle = state[to];
@@ -129,7 +131,7 @@ export class LiquidMover {
     /**
      * 액체 이동 실행
      */
-    private executeMove(state: GameState, move: Move): GameState {
+    private executeMove(state: Puzzle, move: Move): Puzzle {
         const newState = this.deepCopyState(state);
         const { from, to, amount } = move;
 
@@ -145,7 +147,7 @@ export class LiquidMover {
     /**
      * 자동으로 최적의 이동량 계산하여 이동
      */
-    autoMoveLiquid(state: GameState, from: number, to: number): MoveResult {
+    autoMoveLiquid(state: Puzzle, from: number, to: number): MoveResult {
         if (from < 0 || from >= state.length || to < 0 || to >= state.length) {
             return {
                 success: false,
@@ -181,7 +183,7 @@ export class LiquidMover {
     /**
      * 특정 위치에서 가능한 모든 이동 찾기
      */
-    findPossibleMoves(state: GameState, from: number): Move[] {
+    findPossibleMoves(state: Puzzle, from: number): Move[] {
         const possibleMoves: Move[] = [];
 
         if (from < 0 || from >= state.length || state[from].length === 0) {
@@ -208,7 +210,7 @@ export class LiquidMover {
     /**
      * 전체 게임에서 가능한 모든 이동 찾기
      */
-    findAllPossibleMoves(state: GameState): Move[] {
+    findAllPossibleMoves(state: Puzzle): Move[] {
         const allMoves: Move[] = [];
 
         for (let from = 0; from < state.length; from++) {
@@ -222,7 +224,7 @@ export class LiquidMover {
     /**
      * 게임이 완료되었는지 확인
      */
-    isGameCompleted(state: GameState): boolean {
+    isGameCompleted(state: Puzzle): boolean {
         for (const bottle of state) {
             if (bottle.length === 0) continue;
 
@@ -239,7 +241,7 @@ export class LiquidMover {
     /**
      * 이동 후 상태가 더 나아졌는지 평가
      */
-    evaluateMove(state: GameState, move: Move): number {
+    evaluateMove(state: Puzzle, move: Move): number {
         const result = this.moveLiquid(state, move);
         if (!result.success || !result.newState) return -1;
 
@@ -252,7 +254,7 @@ export class LiquidMover {
     /**
      * 게임 상태 점수 계산 (높을수록 완료에 가까움)
      */
-    private calculateGameScore(state: GameState): number {
+    private calculateGameScore(state: Puzzle): number {
         let score = 0;
 
         for (const bottle of state) {
@@ -298,7 +300,7 @@ export class LiquidMover {
         return groups;
     }
 
-    private deepCopyState(state: GameState): GameState {
+    private deepCopyState(state: Puzzle): Puzzle {
         return state.map(bottle => [...bottle]);
     }
 }
@@ -313,21 +315,21 @@ export class GameAPI {
     /**
      * 액체 이동 (정확한 양 지정)
      */
-    moveLiquid(state: GameState, from: number, to: number, amount: number): MoveResult {
+    moveLiquid(state: Puzzle, from: number, to: number, amount: number): MoveResult {
         return this.liquidMover.moveLiquid(state, { from, to, amount });
     }
 
     /**
      * 액체 자동 이동 (최대한 많이)
      */
-    autoMoveLiquid(state: GameState, from: number, to: number): MoveResult {
+    autoMoveLiquid(state: Puzzle, from: number, to: number): MoveResult {
         return this.liquidMover.autoMoveLiquid(state, from, to);
     }
 
     /**
      * 가능한 이동들 조회
      */
-    getPossibleMoves(state: GameState, from?: number): Move[] {
+    getPossibleMoves(state: Puzzle, from?: number): Move[] {
         if (from !== undefined) {
             return this.liquidMover.findPossibleMoves(state, from);
         }
@@ -337,14 +339,14 @@ export class GameAPI {
     /**
      * 게임 완료 확인
      */
-    isCompleted(state: GameState): boolean {
+    isCompleted(state: Puzzle): boolean {
         return this.liquidMover.isGameCompleted(state);
     }
 
     /**
      * 이동 평가
      */
-    evaluateMove(state: GameState, from: number, to: number, amount: number): number {
+    evaluateMove(state: Puzzle, from: number, to: number, amount: number): number {
         return this.liquidMover.evaluateMove(state, { from, to, amount });
     }
 }
@@ -365,7 +367,7 @@ export class GameUtils {
     /**
      * 게임 상태와 가능한 이동들 출력
      */
-    static printGameStatus(state: GameState, gameAPI: GameAPI): void {
+    static printGameStatus(state: Puzzle, gameAPI: GameAPI): void {
         console.log('\n=== 현재 게임 상태 ===');
         PuzzleUtils.printPuzzle(state);
 
@@ -389,7 +391,7 @@ export function testLiquidMovement() {
     const gameAPI = new GameAPI(4);
 
     // 테스트용 퍼즐 생성
-    const initialState: GameState = [
+    const initialState: Puzzle = [
         [1, 2, 3, 1],  // 병 0
         [2, 3, 1, 2],  // 병 1
         [3, 1, 2, 3],  // 병 2
@@ -434,7 +436,7 @@ export function testLiquidMovement() {
 
 // PuzzleUtils import (이전 코드에서)
 class PuzzleUtils {
-    static printPuzzle(state: GameState): void {
+    static printPuzzle(state: Puzzle): void {
         console.log('\n=== Water Sort Puzzle ===');
         const maxHeight = Math.max(...state.map(bottle => bottle.length), 1);
 

@@ -30,7 +30,7 @@ export const GameCompleteModal: React.FC<GameCompleteModalProps> = ({
                             style={[styles.button, styles.cancelButton]}
                             onPress={onCancel}
                         >
-                            <Text style={styles.cancelButtonText}>취소</Text>
+                            <Text style={styles.cancelButtonText}>새 게임</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.button, styles.confirmButton]}

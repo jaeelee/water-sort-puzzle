@@ -1,11 +1,12 @@
 import { BOTTLE_HEIGHT } from "src/pages/game-board/lib/constants";
-import { Color, GameState, Move } from "src/pages/game-board/model/types";
+import { Color, Puzzle } from "src/entities/game";
+import { Move } from "src/pages/game-board/model/types";
 
 /**
  * 퍼즐이 해결되었는지 확인
  */
-export const isSolved = (gameState: GameState, bottleHeight: number = BOTTLE_HEIGHT): boolean => {
-    return gameState.every(bottle => {
+export const isSolved = (Puzzle: Puzzle, bottleHeight: number = BOTTLE_HEIGHT): boolean => {
+    return Puzzle.every(bottle => {
         // 빈 병이거나
         if (bottle.length === 0) return true;
 
@@ -37,7 +38,7 @@ class PriorityQueue<T> {
     }
 }
 
-function isGoalState(state: GameState): boolean {
+function isGoalState(state: Puzzle): boolean {
     for (const bottle of state) {
         if (bottle.length === 0) {
             continue;
@@ -50,11 +51,11 @@ function isGoalState(state: GameState): boolean {
     return true;
 }
 
-function hashState(state: GameState): string {
+function hashState(state: Puzzle): string {
     return JSON.stringify(state);
 }
 
-function getValidMoves(state: GameState): Move[] {
+function getValidMoves(state: Puzzle): Move[] {
     const moves: Move[] = [];
     const n = state.length;
 
@@ -90,14 +91,14 @@ function getValidMoves(state: GameState): Move[] {
     return moves;
 }
 
-function applyMove(state: GameState, move: Move): GameState {
-    const newState: GameState = state.map(bottle => [...bottle]);
+function applyMove(state: Puzzle, move: Move): Puzzle {
+    const newState: Puzzle = state.map(bottle => [...bottle]);
     const movingColors = newState[move.from].splice(-move.amount, move.amount);
     newState[move.to].push(...movingColors);
     return newState;
 }
 
-function countMisplacedColors(state: GameState): number {
+function countMisplacedColors(state: Puzzle): number {
     let misplaced = 0;
     for (const bottle of state) {
         if (bottle.length === 0) {
@@ -113,7 +114,7 @@ function countMisplacedColors(state: GameState): number {
     return misplaced;
 }
 
-function countIncompleteBottles(state: GameState): number {
+function countIncompleteBottles(state: Puzzle): number {
     let incomplete = 0;
     for (const bottle of state) {
         if (bottle.length === 0) {
@@ -127,7 +128,7 @@ function countIncompleteBottles(state: GameState): number {
     return incomplete;
 }
 
-function calculateColorDispersion(state: GameState): number {
+function calculateColorDispersion(state: Puzzle): number {
     const colorPositions: Map<Color, Set<number>> = new Map();
 
     for (let i = 0; i < state.length; i++) {
@@ -146,15 +147,15 @@ function calculateColorDispersion(state: GameState): number {
     return dispersion;
 }
 
-function heuristic(state: GameState): number {
+function heuristic(state: Puzzle): number {
     return countMisplacedColors(state) +
         countIncompleteBottles(state) +
         calculateColorDispersion(state);
 }
 
-function solvePuzzle(initialState: GameState): Move[] | null {
+function solvePuzzle(initialState: Puzzle): Move[] | null {
     const openList = new PriorityQueue<{
-        state: GameState;
+        state: Puzzle;
         path: Move[];
         gCost: number;
     }>();

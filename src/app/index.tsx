@@ -52,7 +52,7 @@ function App(): React.JSX.Element {
           <Stack.Screen
             name="Home"
             component={Home}
-            options={{ title: 'Home' }}
+            options={{ title: 'Water Sort' }}
           />
           <Stack.Screen
             name="Game"

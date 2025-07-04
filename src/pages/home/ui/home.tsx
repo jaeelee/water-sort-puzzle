@@ -3,13 +3,9 @@ import { View, Text, Button, StyleSheet, ScrollView } from "react-native"
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from "react";
-import { Difficulty, GameState, loadGame } from 'src/entities/game';
+import { Difficulty, GameState, loadGame, Puzzle } from 'src/entities/game';
 import { BottomPicker } from 'src/shared';
-
-type RootStackParamList = {
-    Home: undefined;
-    Game: { game: GameState } | undefined;
-};
+import { RootStackParamList } from 'src/app/navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -19,7 +15,6 @@ export const Home = () => {
         difficulty: 'easy',
         bottleHeight: 4,
         numColors: 3,
-        puzzle: []
     });
 
     useFocusEffect(
@@ -29,18 +24,17 @@ export const Home = () => {
                     difficulty: 'easy',
                     bottleHeight: 4,
                     numColors: 3,
-                    puzzle: []
                 });
             });
         }, [])
     );
 
     const handleStartNewGame = () => {
-        navigation.navigate('Game');
+        navigation.navigate('Game', { settings: game });
     };
 
     const handleResumeGame = () => {
-        navigation.navigate('Game', { game });
+        navigation.navigate('Game', { game: game.puzzle, settings: game });
     };
     const [isVisible, setIsVisible] = useState<string | null>(null);
 
@@ -90,7 +84,7 @@ export const Home = () => {
 
                 <View style={styles.buttonContainer}>
                     <Button title="새 게임" onPress={handleStartNewGame} />
-                    {game && (
+                    {game.puzzle && game.puzzle.length > 0 && (
                         <Button title="이어하기" onPress={handleResumeGame} />
                     )}
                 </View>

@@ -1,4 +1,4 @@
-import { Bottle, Color, GameState, Move } from "src/pages/game-board/model/types";
+import { Bottle, Color, Puzzle } from "src/entities/game";
 
 export interface GeneratorConfig {
     numColors: number;
@@ -39,7 +39,7 @@ class WaterSortPuzzleGenerator {
         }
     }
 
-    generate(): GameState {
+    generate(): Puzzle {
         // 역방향 생성 대신 직접 섞인 상태 생성 + 검증
         let attempts = 0;
         while (true) {
@@ -55,7 +55,7 @@ class WaterSortPuzzleGenerator {
         throw new Error(`${GAME_CONFIG.MAX_GENERATION_ATTEMPTS}번 시도 후에도 유효한 퍼즐을 생성할 수 없습니다.`);
     }
 
-    private createDirectlyMixedState(): GameState {
+    private createDirectlyMixedState(): Puzzle {
         // 1. 모든 색상을 배열로 생성
         const allColors: Color[] = [];
         for (let colorId = 1; colorId <= this.config.numColors; colorId++) {
@@ -68,7 +68,7 @@ class WaterSortPuzzleGenerator {
         this.shuffleArray(allColors);
 
         // 3. 섞인 색상을 병에 분배 (전략적으로)
-        const state: GameState = [];
+        const state: Puzzle = [];
         let colorIndex = 0;
 
         // 대부분의 병을 가득 채우되, 마지막 몇 개는 빈 상태로 남김
@@ -101,12 +101,12 @@ class WaterSortPuzzleGenerator {
         }
     }
 
-    private countEmptyBottles(state: GameState): number {
+    private countEmptyBottles(state: Puzzle): number {
         return state.filter(bottle => bottle.length === 0).length;
     }
 
     // 완전 섞임 검증: 1. 색이 겹치지 않았는가 (각 병에 다양한 색상이 있는가)
-    private isCompletelyMixed(state: GameState): boolean {
+    private isCompletelyMixed(state: Puzzle): boolean {
         for (const bottle of state) {
             if (bottle.length === 0) continue;
             let prevColor = 0;
@@ -119,7 +119,7 @@ class WaterSortPuzzleGenerator {
     }
 
     // 완전 섞임 검증: 2. 빈병이 아닌 곳은 모두 적절히 구성되어 있는가
-    private hasValidStructure(state: GameState): boolean {
+    private hasValidStructure(state: Puzzle): boolean {
         // 색상 개수 검증
         const colorCounts = new Map<Color, number>();
         for (const bottle of state) {
@@ -154,7 +154,7 @@ class WaterSortPuzzleGenerator {
 
 // features/puzzle-generator/api/generator-api.ts
 export class PuzzleGeneratorAPI {
-    static generateEasyPuzzle(): GameState {
+    static generateEasyPuzzle(): Puzzle {
         const generator = new WaterSortPuzzleGenerator({
             numColors: 3,
             bottleHeight: 4,
@@ -163,7 +163,7 @@ export class PuzzleGeneratorAPI {
         return generator.generate();
     }
 
-    static generateMediumPuzzle(): GameState {
+    static generateMediumPuzzle(): Puzzle {
         const generator = new WaterSortPuzzleGenerator({
             numColors: 5,
             bottleHeight: 4,
@@ -172,7 +172,7 @@ export class PuzzleGeneratorAPI {
         return generator.generate();
     }
 
-    static generateHardPuzzle(): GameState {
+    static generateHardPuzzle(): Puzzle {
         const generator = new WaterSortPuzzleGenerator({
             numColors: 8,
             bottleHeight: 4,
@@ -181,7 +181,7 @@ export class PuzzleGeneratorAPI {
         return generator.generate();
     }
 
-    static generateCustomPuzzle(config: GeneratorConfig): GameState {
+    static generateCustomPuzzle(config: GeneratorConfig): Puzzle {
         const generator = new WaterSortPuzzleGenerator(config);
         return generator.generate();
     }
@@ -189,7 +189,7 @@ export class PuzzleGeneratorAPI {
 
 // features/puzzle-generator/lib/utils.ts
 export class PuzzleUtils {
-    static printPuzzle(state: GameState): void {
+    static printPuzzle(state: Puzzle): void {
         console.log('\n=== Water Sort Puzzle ===');
         const maxHeight = Math.max(...state.map(bottle => bottle.length), 1);
 
@@ -216,7 +216,7 @@ export class PuzzleUtils {
         console.log('========================\n');
     }
 
-    static analyzePuzzle(state: GameState): void {
+    static analyzePuzzle(state: Puzzle): void {
         console.log('=== 퍼즐 분석 ===');
 
         let mixedBottles = 0;
@@ -244,7 +244,7 @@ export class PuzzleUtils {
         console.log('================\n');
     }
 
-    static validatePuzzleConstraints(state: GameState): boolean {
+    static validatePuzzleConstraints(state: Puzzle): boolean {
         const colorCounts = new Map<Color, number>();
 
         for (const bottle of state) {
