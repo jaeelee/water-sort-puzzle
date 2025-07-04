@@ -11,31 +11,47 @@ import { GameExitModal } from 'src/features/game-exit';
 import { GameCompleteModal } from 'src/features/game-exit/ui/game-complete-modal';
 import { clearGame, loadGame, saveGame } from 'src/entities/game';
 import type { GameState } from 'src/entities/game';
+import type { GameSettings } from 'src/pages/game-board/model/types';
 
 const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331', "#9977aa", "#ad12ad"]
 
 export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     const navigation = useNavigation();
     const route = useRoute();
-    const game = (route.params as any)?.game as GameState | undefined;
-    const gameAPI = new GameAPI(bottleHeight);
+    const params = route.params as any;
+    const game = params?.game as GameState | undefined;
+    const settings = params?.settings as GameSettings | undefined;
+    // 설정이 있으면 설정을 사용, 없으면 기본값 사용
+    const finalBottleHeight = settings?.bottleSize || bottleHeight;
+    const gameAPI = new GameAPI(finalBottleHeight);
 
     const [puzzle, setPuzzle] = useState(() => {
         console.log('퍼즐 생성 중...'); // 한 번만 실행됨을 확인
         console.log("받은 game:", game);
+        console.log("받은 settings:", settings);
 
         if (game) {
             console.log("저장된 게임 불러오기:", game.puzzle);
             return game.puzzle;
         }
 
-        console.log("새 게임 생성");
-        const puzzle = PuzzleGeneratorAPI.generateCustomPuzzle({
-            numColors,
-            bottleHeight,
-            numBottles: numColors + 2,
+        // 설정이 있으면 설정을 사용, 없으면 기본값 사용
+        const finalBottleHeight = settings?.bottleSize || bottleHeight;
+        const finalNumBottles = settings?.bottleCount || (numColors + 2);
+        const finalNumColors = Math.min(finalNumBottles - 2, numColors); // 병 개수에 맞게 색상 수 조정
+
+        console.log("새 게임 생성", {
+            bottleHeight: finalBottleHeight,
+            numBottles: finalNumBottles,
+            numColors: finalNumColors
         });
-        saveGame({ puzzle, bottleHeight, numColors });
+
+        const puzzle = PuzzleGeneratorAPI.generateCustomPuzzle({
+            numColors: finalNumColors,
+            bottleHeight: finalBottleHeight,
+            numBottles: finalNumBottles,
+        });
+        saveGame({ puzzle, bottleHeight: finalBottleHeight, numColors: finalNumColors });
         return puzzle;
     });
     const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -75,12 +91,12 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     };
 
     useEffect(() => {
-        if (isSolved(puzzle, bottleHeight)) {
-            console.log(isSolved(puzzle, bottleHeight));
+        if (isSolved(puzzle, finalBottleHeight)) {
+            console.log(isSolved(puzzle, finalBottleHeight));
             setIsSolved(true);
             clearGame();
         }
-    }, [puzzle]);
+    }, [puzzle, finalBottleHeight]);
 
     return (
         <View style={boardStyles.container}>
@@ -103,7 +119,7 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
                     puzzle.map((colors, index) => {
                         return <Bottle
                             key={index}
-                            maxLiquidCount={4}
+                            maxLiquidCount={finalBottleHeight}
                             onClick={() => handleBottleClick(index)}
                             isSelected={selectedIndex === index}
                             colors={colors.map(e => COLOR[e])} />

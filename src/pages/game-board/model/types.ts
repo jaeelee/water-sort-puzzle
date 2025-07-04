@@ -7,3 +7,11 @@ export interface Move {
     to: number;
     amount: number;
 }
+
+export type Difficulty = 'easy' | 'medium' | 'hard';
+
+export interface GameSettings {
+    difficulty: Difficulty;
+    bottleSize: number; // 4-10
+    bottleCount: number; // 3-20
+}
