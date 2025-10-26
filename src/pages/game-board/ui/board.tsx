@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useState } from "react";
-import { View } from "react-native"
+import { ScrollView, View } from "react-native"
 import { PuzzleGeneratorAPI } from "src/pages/game-board/lib/game-generator";
 import { GameAPI } from "src/pages/game-board/lib/game-logic";
 import { boardStyles } from "src/pages/game-board/ui/board.styles";
@@ -10,8 +10,7 @@ import { isSolved } from 'src/pages/game-board/lib/game-solver';
 import { GameExitModal } from 'src/features/game-exit';
 import { GameCompleteModal } from 'src/features/game-exit/ui/game-complete-modal';
 import { clearGame, GameState, loadGame, Puzzle, saveGame } from 'src/entities/game';
-
-const COLOR = ['', 'red', 'green', 'yellow', 'blue', 'gray', '#00ff00', '#ff00ff', '#00ffff', '#7878FF', '#8B6331', "#9977aa", "#ad12ad"]
+import { COLOR } from 'src/entities/game/lib/constants';
 
 export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     const navigation = useNavigation();
@@ -23,7 +22,13 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     const finalBottleHeight = settings?.bottleHeight || bottleHeight;
     const gameAPI = new GameAPI(finalBottleHeight);
 
-    const [puzzle, setPuzzle] = useState(() => {
+
+
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [solved, setIsSolved] = useState(false);
+
+    const generatePuzzle = useCallback(() => {
+
         console.log('퍼즐 생성 중...'); // 한 번만 실행됨을 확인
         console.log("받은 game:", game);
 
@@ -51,10 +56,8 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
         });
         saveGame({ puzzle, bottleHeight: finalBottleHeight, numColors: finalNumColors, difficulty: settings?.difficulty || 'easy' });
         return puzzle;
-    });
-
-    const [selectedIndex, setSelectedIndex] = useState(-1);
-    const [solved, setIsSolved] = useState(false);
+    }, [game, settings, bottleHeight, numColors]);
+    const [puzzle, setPuzzle] = useState(() => generatePuzzle());
 
     const handleBottleClick = (index: number) => {
         if (selectedIndex > -1) {
@@ -98,17 +101,22 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
     }, [puzzle, finalBottleHeight]);
 
     return (
-        <View style={boardStyles.container}>
+        <ScrollView style={boardStyles.container}>
             <GameExitModal
                 visible={false}
-                onCancel={() => { }}
+                onCancel={() => {
+                }}
                 onConfirm={() => {
                     navigation.goBack();
                 }}
             />
             <GameCompleteModal
                 visible={solved}
-                onCancel={() => { }}
+                onCancel={() => {
+                    setIsSolved(false);
+                    setPuzzle(generatePuzzle());
+
+                }}
                 onConfirm={() => {
                     navigation.goBack();
                 }}
@@ -124,6 +132,6 @@ export const Board = ({ bottleHeight = 4, numColors = 10 }) => {
                             colors={colors.map(e => COLOR[e])} />
                     })}
             </View>
-        </View>
+        </ScrollView>
     )
 }

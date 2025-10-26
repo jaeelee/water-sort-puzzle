@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   StatusBar,
+  Text,
   useColorScheme,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -52,7 +53,15 @@ function App(): React.JSX.Element {
           <Stack.Screen
             name="Home"
             component={Home}
-            options={{ title: 'Water Sort' }}
+            options={{
+              title: 'Water Sort',
+              headerRight: () => <Text
+                style={{ fontSize: 20, marginRight: 15, color: '#007AFF' }}
+                onPress={() => console.log('settings')}
+              >
+                ⚙️
+              </Text>
+            }}
           />
           <Stack.Screen
             name="Game"
